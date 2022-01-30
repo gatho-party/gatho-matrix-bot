@@ -26,7 +26,7 @@ export function calculateStatusToSend(
   emojiToStatusMap: { [key: string]: Status; }
 ): Status | null {
   const redactedRSVP: RSVPReaction | undefined = rsvpsInRoom
-    .find(rsvp => rsvp.eventId === redactionEventId);
+    .find(rsvp => rsvp.matrixEventId === redactionEventId);
 
   if (redactedRSVP === undefined) {
     return null;
@@ -45,7 +45,7 @@ export function calculateStatusToSend(
 
   const ourOtherReleventReactions = rsvpsInRoom
     .filter(rsvp => rsvp.sender === senderOfRedactedRSVP)
-    .filter(rsvp => rsvp.eventId !== redactionEventId)
+    .filter(rsvp => rsvp.matrixEventId !== redactionEventId)
     .filter(rsvp => emojiToStatusMap.hasOwnProperty(rsvp.reaction))
 
   if (ourOtherReleventReactions.length === 1) {
@@ -67,7 +67,7 @@ export function removeRSVP(rsvpCount: RSVPCount, roomId: string, redactionEvent:
     return rsvpCount;
   }
   const newGlobalRSVPCountForRoom: RSVPReaction[] = rsvpCount[roomId]
-    .filter(rsvp => rsvp.eventId !== redactionEvent);
+    .filter(rsvp => rsvp.matrixEventId !== redactionEvent);
 
   if (newGlobalRSVPCountForRoom.length === rsvpCount[roomId].length) {
     console.error(`Didn't find event ${redactionEvent} in RSVPs`);

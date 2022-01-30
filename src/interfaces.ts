@@ -2,7 +2,7 @@
 export interface RSVPReaction {
   reaction: string;
   sender: string;
-  eventId: string;
+  matrixEventId: string;
   displayname?:string;
 }
 export type RSVPCount = {[key:string]: RSVPReaction[]; };

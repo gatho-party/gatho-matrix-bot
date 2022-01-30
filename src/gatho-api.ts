@@ -8,11 +8,11 @@ import { LogService } from "matrix-bot-sdk";
 export const gathoApiUrl = "https://gatho.party";
 
 /**
- * 
+ * Send a POST request with a JSON payload
  * @param urlPath Must include leading slash
  * @param payload Object to be JSON stringified and sent as body
 */
-async function sendPostRequest(urlPath: string, payload: any): Promise<Response> {
+async function sendPostRequest(urlPath: string, payload: Object): Promise<Response> {
   let body: string;
   try {
     body = JSON.stringify(payload);
@@ -27,10 +27,14 @@ async function sendPostRequest(urlPath: string, payload: any): Promise<Response>
   return result;
 }
 
+/**
+ * Send RSVP to the Gatho server with the status of a given user
+ * @param Object containing the typed fields.
+ * @returns 
+ */
 export async function sendRSVP(
   { status, matrix_username, roomId, displayname }:
-    { status: Status, matrix_username?: string, roomId: string, displayname?: string }
-
+    { status: Status, matrix_username: string, roomId: string, displayname?: string }
 ): Promise<Response | null> {
   const payload: RSVPViaMatrixPayload = {
     secret_matrix_bot_key,
@@ -41,28 +45,37 @@ export async function sendRSVP(
   }
   let result;
   try {
-    LogService.debug("index", `Sending RSVP out...`);
+    LogService.debug("gatho-api", `Sending RSVP out...`);
     result = await sendPostRequest('/api/rsvp-via-matrix', payload);
-    
-    LogService.debug("index", `...result sending RSVP is ${JSON.stringify(result)}`);
+    LogService.debug("gatho-api", `...result sending RSVP is ${JSON.stringify(result)}`);
   } catch (e) {
-    LogService.error("index", `Error sending RSVP: ${e}`);
-    console.log(`Error sending RSVP: ${e}`);
+    LogService.error("gatho-api", `Error sending RSVP: ${e}`);
     return null;
   }
-
   return result;
 }
 
+/**
+ * Fetch the message ID of the message designated as the RSVP message.
+ * @param roomId The Matrix Room ID of the room to look up.
+ * @returns 
+ */
 export async function fetchRsvpMessageId(roomId: string): Promise<string | null> {
   const payload: FetchRSVPMessageIdPayload = {
     secret_matrix_bot_key,
     matrix_room_address: roomId
   }
-  const result = await sendPostRequest('/api/rsvp-message-id-for-room', payload);
-  const json = await result.json();
+
+  let json;
+  try {
+    const result = await sendPostRequest('/api/rsvp-message-id-for-room', payload);
+    json = await result.json();
+  } catch (e) {
+    LogService.error("gatho-api", `Failed to fetch message id for room ${roomId}`);
+  }
   if (json.status === undefined) {
-    throw Error("No success in status of rsvp-message-id-for-room response.");
+    LogService.error("gatho-api", `No success field in response of /api/rsvp-message-id-for-room`);
+    return null;
   }
   return json.matrix_room_address;
 }

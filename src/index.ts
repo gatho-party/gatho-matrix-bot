@@ -53,7 +53,7 @@ async function handleRedaction(roomId: string, event: any) {
   const newStatus: Status | null = calculateStatusToSend(rsvpsInOurRoom, eventIdThatIsBeingRedacted, emojiMap);
   if (newStatus !== null) {
     const redactedRSVP: RSVPReaction | undefined = rsvpsInOurRoom
-      .find(rsvp => rsvp.eventId === eventIdThatIsBeingRedacted);
+      .find(rsvp => rsvp.matrixEventId === eventIdThatIsBeingRedacted);
     if (redactedRSVP === undefined) {
       return;
     }
@@ -69,6 +69,12 @@ async function handleRedaction(roomId: string, event: any) {
   globalRSVPCount = removeRSVP(globalRSVPCount, roomId, eventIdThatIsBeingRedacted);
 }
 
+/**
+ * Get the Matrix message ID of the RSVP message, and store it under the roomId key in the
+ * `rsvpMessageEventId` object.
+ * @param roomId Matrix room ID to find the RSVP message ID in
+ * @returns 
+ */
 async function setRsvpMessageId(roomId: string): Promise<boolean> {
   LogService.info("index", "RSVP message event ID is not defined yet, looking up...");
   const maybeRsvpMessageId = await fetchRsvpMessageId(roomId);
@@ -86,42 +92,48 @@ async function setRsvpMessageId(roomId: string): Promise<boolean> {
 }
 
 /**
- * If this doesn't fire, it might be because you haven't yarn linked the
- * patched `matrix-bot-sdk` * :)
  * */
-async function handleReaction(roomId: string, event: any) {
+
+
+/**
+ * Handle Matrix reaction events. If this doesn't fire, it might be because you haven't
+ * `yarn link`ed the patched `matrix-bot-sdk` - see README.md :)
+ * @param roomId The Matrix room id of the event
+ * @param event The Matrix event
+ */
+async function handleReaction(roomId: string, event: any): Promise<undefined> {
   // If we don't know what message is the special RSVP message, check the server
   if (rsvpMessageEventId[roomId] === undefined) {
-    console.log("We don't know which message is the special RSVP one, getting from server..");
+    LogService.debug("index", `We don't yet have the RSVP message ID for room ${roomId}, fetching...`);
     if (await setRsvpMessageId(roomId) === false) {
-      console.log("No RSVP message set on server. Ignoring.");
+      LogService.debug("index", `No RSVP message on server for room ${roomId}, ignoring.`);
       return;
     } else {
-      console.log("Got RSVP message from server");
+      LogService.debug("index", `Got RSVP message id.`);
     }
   }
 
-  console.log(JSON.stringify(event, null, 2));
   const relatesTo: { event_id: string } | undefined = event.content['m.relates_to'];
   if (relatesTo === undefined) {
+    LogService.error("index", `m.relates_to event field doesn't exist in reaction event, ignoring.`);
     return;
   }
   const relatesToEventId = relatesTo.event_id;
   if (rsvpMessageEventId[roomId] !== relatesToEventId) {
-    // Not about our message
+    // Emoji is not on our RSVP message id, ignoring.
     return;
   }
 
-  // The emoji reaction
+  /** The emoji reaction */
   const emoji = event.content['m.relates_to'].key;
-  // The username of the person who reacted
+  /** The username of the person who reacted */
   const matrix_username = event.sender;
-  const eventId = event.event_id;
+  const matrixEventId = event.event_id;
 
   const displayname = await getDisplayname(matrix_username);
   const newReaction: RSVPReaction = {
     reaction: emoji,
-    eventId,
+    matrixEventId: matrixEventId,
     sender: matrix_username,
     displayname
   }

@@ -15,7 +15,7 @@ describe("#calculateStatusToSend()", () => {
       {
         reaction: "up",
         sender: 'alice',
-        eventId: 'event1'
+        matrixEventId: 'event1'
       }
     ];
 
@@ -28,12 +28,12 @@ describe("#calculateStatusToSend()", () => {
       {
         reaction: "up",
         sender: 'alice',
-        eventId: 'event1'
+        matrixEventId: 'event1'
       },
       {
         reaction: "down",
         sender: 'alice',
-        eventId: 'event2'
+        matrixEventId: 'event2'
       }
     ];
 
@@ -45,12 +45,12 @@ describe("#calculateStatusToSend()", () => {
       {
         reaction: "down",
         sender: 'alice',
-        eventId: 'event1'
+        matrixEventId: 'event1'
       },
       {
         reaction: "up",
         sender: 'alice',
-        eventId: 'event2'
+        matrixEventId: 'event2'
       }
     ];
 
@@ -63,17 +63,17 @@ describe("#calculateStatusToSend()", () => {
       {
         reaction: "thinking",
         sender: 'alice',
-        eventId: 'event1'
+        matrixEventId: 'event1'
       },
       {
         reaction: "up",
         sender: 'alice',
-        eventId: 'event2'
+        matrixEventId: 'event2'
       },
       {
         reaction: "down",
         sender: 'alice',
-        eventId: 'event3'
+        matrixEventId: 'event3'
       }
     ];
 
@@ -85,17 +85,17 @@ describe("#calculateStatusToSend()", () => {
       {
         reaction: "WOOOOO",
         sender: 'alice',
-        eventId: 'event1'
+        matrixEventId: 'event1'
       },
       {
         reaction: "up",
         sender: 'alice',
-        eventId: 'event2'
+        matrixEventId: 'event2'
       },
       {
         reaction: "down",
         sender: 'alice',
-        eventId: 'event3'
+        matrixEventId: 'event3'
       }
     ];
 
