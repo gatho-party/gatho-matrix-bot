@@ -7,7 +7,9 @@ import { homeserverUrl, password, username } from './secrets'
 import { RSVPCount, RSVPMessageIdsForRoom, RSVPReaction } from './interfaces';
 import { calculateStatusToSend, removeRSVP, updateGlobalRSVPCount } from './update-rsvp-count'
 import { emojiMap, Status } from "./common-interfaces";
-import { gathoApiUrl, fetchRsvpMessageId, sendRSVP } from "./gatho-api";
+import { fetchRsvpMessageId, sendRSVP } from "./gatho-api";
+import { generateLinkEventUrl } from './utils';
+import { gathoApiUrl } from "./config";
 
 LogService.setLogger(new RichConsoleLogger());
 // LogService.setLevel(LogLevel.INFO);
@@ -170,7 +172,7 @@ async function main() {
     LogService.info("index", `Bot joined room ${roomId}`);
     client.sendMessage(roomId, {
       "msgtype": "m.notice",
-      "body": `Hello, this is the Gatho.party bot! Link this chat to a Gatho event via ${generateLinkEventUrl(roomId)}. For questions or feedback join #gatho-events:matrix.org.`,
+      "body": `Hello, this is the Gatho.party bot! Link this chat to a Gatho event via ${generateLinkEventUrl(roomId, gathoApiUrl)}. For questions or feedback join #gatho-events:matrix.org.`,
     });
   });
 
@@ -179,8 +181,5 @@ async function main() {
   LogService.info("index", "Bot started!");
 }
 
-function generateLinkEventUrl(roomId: string) {
-  const urlEncodedRoomId = encodeURIComponent(roomId);
-  return `${gathoApiUrl}/link-chat/${urlEncodedRoomId}`
-}
+
 main();

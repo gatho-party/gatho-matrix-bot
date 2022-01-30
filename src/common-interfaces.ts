@@ -10,9 +10,6 @@ export const emojiMap: { [key: string]: Status; } = {
   "🤔": 'maybe'
 }
 
-// export const gathoApiUrl = "http://localhost:3000";
-export const gathoApiUrl = "https://gatho.party";
-
 export type Status = 'going' | 'maybe' | 'notgoing' | 'invited';
 
 /////////

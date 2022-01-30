@@ -3,9 +3,7 @@ export type Status = 'going' | 'maybe' | 'notgoing' | 'invited';
 import { secret_matrix_bot_key } from './secrets';
 import fetch, { Response } from 'node-fetch';
 import { LogService } from "matrix-bot-sdk";
-
-// export const gathoApiUrl = "http://localhost:3000";
-export const gathoApiUrl = "https://gatho.party";
+import { gathoApiUrl } from './config';
 
 /**
  * Send a POST request with a JSON payload
