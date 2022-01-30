@@ -1,6 +1,6 @@
 import { RSVPViaMatrixPayload, FetchRSVPMessageIdPayload } from "./common-interfaces";
 export type Status = 'going' | 'maybe' | 'notgoing' | 'invited';
-import { secret_matrix_bot_key } from './secrets';
+import { secret_matrix_bot_key } from './config';
 import fetch, { Response } from 'node-fetch';
 import { LogService } from "matrix-bot-sdk";
 import { gathoApiUrl } from './config';

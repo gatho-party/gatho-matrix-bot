@@ -3,13 +3,12 @@ import {
   LogService, LogLevel,
   RichConsoleLogger,
 } from "matrix-bot-sdk";
-import { homeserverUrl, password, username } from './secrets'
+import { homeserverUrl, password, username, gathoApiUrl } from './config'
 import { RSVPCount, RSVPMessageIdsForRoom, RSVPReaction } from './interfaces';
 import { calculateStatusToSend, removeRSVP, updateGlobalRSVPCount } from './update-rsvp-count'
 import { emojiMap, Status } from "./common-interfaces";
 import { fetchRsvpMessageId, sendRSVP } from "./gatho-api";
 import { generateLinkEventUrl } from './utils';
-import { gathoApiUrl } from "./config";
 
 LogService.setLogger(new RichConsoleLogger());
 // LogService.setLevel(LogLevel.INFO);
