@@ -4,6 +4,30 @@ import { secret_matrix_bot_key } from './config';
 import fetch, { Response } from 'node-fetch';
 import { LogService } from "matrix-bot-sdk";
 import { gathoApiUrl } from './config';
+import {store} from './store';
+
+/**
+ * Get the Matrix message ID of the RSVP message, and store it under the roomId key in the
+ * `rsvpMessageEventId` object.
+ * @param roomId Matrix room ID to find the RSVP message ID in
+ * @returns 
+ */
+export async function setRsvpMessageId(roomId: string): Promise<boolean> {
+  LogService.info("index", "RSVP message event ID is not defined yet, looking up...");
+  const maybeRsvpMessageId = await fetchRsvpMessageId(roomId);
+  LogService.info("index", "Got response from API.");
+  if (maybeRsvpMessageId === null) {
+    LogService.error("index", `Unable to find message id from db for room ${roomId}. Event likely doesn't yet exist`);
+    return false;
+  } else if (maybeRsvpMessageId === '') {
+    LogService.error("index", `No rsvp message id is yet stored (it's empty) in db for room ${roomId}`);
+    return false;
+  } else {
+    store.dispatch({type: 'set-rsvp-message-id', roomId, rsvpMessageId: maybeRsvpMessageId});
+    return true
+  }
+}
+
 
 /**
  * Send a POST request with a JSON payload

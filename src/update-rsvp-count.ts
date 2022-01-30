@@ -2,13 +2,13 @@ import { RSVPCount, RSVPReaction } from './interfaces';
 import { Status } from './gatho-api';
 import { LogService } from 'matrix-bot-sdk';
 /**
- * 
+ * Add new RSVP
  * @param rsvpCount The current reactions/RSVPs.
  * @param roomId The room (party) we are updating the RSVPs for
  * @param reaction The object containing info about the reaction Matrix event
  * @returns New RSVP count
  */
-export function updateGlobalRSVPCount(rsvpCount: RSVPCount, roomId: string, reaction: RSVPReaction): RSVPCount {
+export function addRSVP(rsvpCount: RSVPCount, roomId: string, reaction: RSVPReaction): RSVPCount {
   const newRSVPCount: RSVPCount = Object.assign({}, rsvpCount);
   if (roomId in rsvpCount === false) {
     newRSVPCount[roomId] = [];
