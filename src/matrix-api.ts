@@ -1,8 +1,7 @@
 
 import {
-  MatrixAuth, MatrixClient, SimpleFsStorageProvider, AutojoinRoomsMixin,
-  LogService, LogLevel,
-  RichConsoleLogger,
+   MatrixClient,
+  LogService
 } from "matrix-bot-sdk";
 
 export async function getDisplayname(client: MatrixClient, matrix_username: string): Promise<string | undefined> {
