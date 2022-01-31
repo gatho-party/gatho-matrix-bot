@@ -1,4 +1,4 @@
-import { FetchRSVPMessageIdReq, RSVPViaMatrixPayload, FetchRSVPMessageIdRes, SetRSVPMessage } from "./common-interfaces";
+import { FetchRSVPMessageIdReq, RSVPViaMatrixPayload, FetchRSVPMessageIdRes, SetRSVPMessageReq } from "./common-interfaces";
 export type Status = 'going' | 'maybe' | 'notgoing' | 'invited';
 import { secret_matrix_bot_key } from './config';
 import fetch, { Response } from 'node-fetch';
@@ -83,7 +83,7 @@ export async function fetchRSVPMessageId(roomId: string): Promise<FetchRSVPMessa
 export async function setRSVPMessageId({ roomId, rsvpMessageEventId }:
   { roomId: string, rsvpMessageEventId: string }): Promise<Response | null> {
 
-  const payload: SetRSVPMessage = {
+  const payload: SetRSVPMessageReq = {
     room_id: roomId,
     rsvp_message_id: rsvpMessageEventId,
     secret_matrix_bot_key,
@@ -91,7 +91,7 @@ export async function setRSVPMessageId({ roomId, rsvpMessageEventId }:
   let result;
   try {
     LogService.debug("gatho-api", `Sending RSVP Message Id out...`);
-    result = await sendPostRequest('/api/set-rsvp-message-id', payload);
+    result = await sendPostRequest('/api/set-rsvp-message-id-via-matrix', payload);
     LogService.debug("gatho-api", `...result sending RSVP is ${JSON.stringify(result)}`);
   } catch (e) {
     LogService.error("gatho-api", `Error sending RSVP: ${e}`);
