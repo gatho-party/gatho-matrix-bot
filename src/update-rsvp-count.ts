@@ -1,6 +1,5 @@
 import { RSVPCount, RSVPReaction } from './interfaces';
 import { Status } from './gatho-api';
-import { LogService } from 'matrix-bot-sdk';
 /**
  * Add new RSVP
  * @param rsvpCount The current reactions/RSVPs.
@@ -40,9 +39,10 @@ export function calculateStatusToSend(
 
   /*
   If we're redacting something, and we don't have any other entries - then make us 'invited'.
-  If we're redacting something, and we already have another *valid* entry - don't send anything.
+  If we're redacting something, and we we already have *ONE* other *valid* entry - send the
+    other valid entry.
+  Otherwise - don't send anything.
   */
-
   const ourOtherReleventReactions = rsvpsInRoom
     .filter(rsvp => rsvp.sender === senderOfRedactedRSVP)
     .filter(rsvp => rsvp.matrixEventId !== redactionEventId)
