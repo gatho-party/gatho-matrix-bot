@@ -2,7 +2,82 @@
 import { RSVPCount, RSVPReaction } from '../src/interfaces';
 import { sendRSVP, Status } from '../src/gatho-api';
 import { emojiMap } from '../src/common-interfaces';
-import { calculateStatusToSend } from '../src/update-rsvp-count';
+import { addRSVP, calculateStatusToSend } from '../src/update-rsvp-count';
+
+describe("#addRSVP()", () => {
+  test("when no other rsvps are present, add new rsvp", async () => {
+    const rsvpCount: RSVPCount = {};
+    const newRsvpCount = addRSVP(rsvpCount, 'our-room-id', {
+      reaction: '👎️',
+      sender: 'sender',
+      matrixEventId: 'event_id',
+      displayname: 'sender pretty name'
+    });
+    expect(newRsvpCount).toMatchInlineSnapshot(`
+Object {
+  "our-room-id": Array [
+    Object {
+      "displayname": "sender pretty name",
+      "matrixEventId": "event_id",
+      "reaction": "👎️",
+      "sender": "sender",
+    },
+  ],
+}
+`);
+  });
+
+  test("when other rsvp with same sender present, don't replace rsvp", async () => {
+    const rsvpCount: RSVPCount = {
+      'our-room-id': [
+        {
+        reaction: '👎️',
+        sender: 'sender',
+        matrixEventId: 'event_id1',
+        displayname: 'sender pretty name'
+      },
+        {
+        reaction: '👎️',
+        sender: 'other_sender',
+        matrixEventId: 'event_id2',
+        displayname: 'some other sender pretty name'
+      }
+    ]
+
+    };
+    const newRsvpCount = addRSVP(rsvpCount, 'our-room-id', {
+      reaction: '👍️',
+      sender: 'sender',
+      matrixEventId: 'event_id',
+      displayname: 'sender pretty name'
+    });
+    expect(newRsvpCount).toMatchInlineSnapshot(`
+Object {
+  "our-room-id": Array [
+    Object {
+      "displayname": "sender pretty name",
+      "matrixEventId": "event_id1",
+      "reaction": "👎️",
+      "sender": "sender",
+    },
+    Object {
+      "displayname": "some other sender pretty name",
+      "matrixEventId": "event_id2",
+      "reaction": "👎️",
+      "sender": "other_sender",
+    },
+    Object {
+      "displayname": "sender pretty name",
+      "matrixEventId": "event_id",
+      "reaction": "👍️",
+      "sender": "sender",
+    },
+  ],
+}
+`);
+  });
+});
+
 describe("#calculateStatusToSend()", () => {
   const emojiMap: { [key: string]: Status; } = {
     "up": 'going',

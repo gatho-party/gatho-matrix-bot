@@ -7,7 +7,7 @@ import { homeserverUrl, password, username, gathoApiUrl } from './config'
 import { RSVPReaction } from './interfaces';
 import { calculateStatusToSend, removeRSVP, addRSVP } from './update-rsvp-count'
 import { emojiMap, Status } from "./common-interfaces";
-import { sendRSVP, setRsvpMessageId } from "./gatho-api";
+import { sendRSVP, fetchRSVPMessageId } from "./gatho-api";
 import { generateLinkEventUrl } from './utils';
 import { store } from './store';
 import {handleReaction} from './handlers'
@@ -22,11 +22,11 @@ const storage = new SimpleFsStorageProvider("./data/bot.json");
 
 export async function handleRedaction(roomId: string, event: any) {
   // If we don't know what message is the special RSVP message, check the server
-  if (store.getState().rsvpMessages[roomId] === undefined) {
-    if (await setRsvpMessageId(roomId) === false) {
-      return;
-    }
-  }
+  // if (store.getState().rsvpMessages[roomId] === undefined) {
+  //   if (await fetchRSVPMessageId(roomId) === false) {
+  //     return;
+  //   }
+  // }
 
   const eventIdThatIsBeingRedacted: string = event.redacts;
   if (eventIdThatIsBeingRedacted === undefined) {
@@ -34,8 +34,7 @@ export async function handleRedaction(roomId: string, event: any) {
     return
   }
 
-  const state = store.getState();
-  const rsvpsInOurRoom = state.rsvpReactions[roomId] as RSVPReaction[] | undefined;
+  const rsvpsInOurRoom = store.getState().rsvpReactions[roomId] as RSVPReaction[] | undefined;
   if (rsvpsInOurRoom === undefined) {
     // Room isn't yet defined, so there are no RSVPs present.
     return;

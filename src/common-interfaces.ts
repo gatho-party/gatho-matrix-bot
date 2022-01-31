@@ -26,6 +26,16 @@ export interface RSVPViaMatrixPayload extends ViaMatrixPayload {
   displayname?: string;
 }
 
-export interface FetchRSVPMessageIdPayload extends ViaMatrixPayload {
+export interface FetchRSVPMessageIdReq extends ViaMatrixPayload {
   matrix_room_address: string
+}
+export interface FetchRSVPMessageIdRes {
+  status: `success`,
+  matrix_room_address: string | null,
+  event_exists_for_room: boolean 
+}
+
+export interface SetRSVPMessage extends ViaMatrixPayload {
+    room_id: string,
+    rsvp_message_id: string,
 }
