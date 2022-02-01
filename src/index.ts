@@ -9,8 +9,8 @@ import { store } from './store';
 import { handleInviteEvent, handleReaction, handleRedaction } from './handlers'
 
 LogService.setLogger(new RichConsoleLogger());
-// LogService.setLevel(LogLevel.INFO);
-LogService.setLevel(LogLevel.TRACE);
+LogService.setLevel(LogLevel.INFO);
+// LogService.setLevel(LogLevel.TRACE);
 // LogService.muteModule("Metrics");
 LogService.trace = LogService.debug;
 

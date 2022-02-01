@@ -119,8 +119,9 @@ export async function handleInviteEvent(store: OurStore, client: MatrixClient, r
       return;
     }
 
-    if (eventInfo.event_exists_for_room === false || eventInfo.matrix_room_address == null) {
-      // Room isn't linked if no event exists for room or matrix room address is null
+    if (eventInfo.event_exists_for_room === false) {
+      // Room isn't linked if no event exists
+      // If matrix room ID not linked yet that's fine - that will come later
       LogService.info("handlers", `Room isn't linked, ignoring join event`);
       return;
     }
