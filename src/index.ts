@@ -4,15 +4,9 @@ import {
   RichConsoleLogger,
 } from "matrix-bot-sdk";
 import { homeserverUrl, matrixBotPassword, matrixBotUsername, gathoApiUrl } from './config'
-import { RSVPReaction } from './interfaces';
-import { calculateStatusToSend, removeRSVP, addRSVP } from './update-rsvp-count'
-import { emojiMap, Status } from "./common-interfaces";
-import { sendRSVP, fetchRSVPMessageId } from "./gatho-api";
-import { generateLinkEventUrl, isJoinEvent, parseMatrixUsernamePretty } from './utils';
+import { generateLinkEventUrl, isInviteEvent, isJoinEvent, parseMatrixUsernamePretty } from './utils';
 import { store } from './store';
-import { handleJoinEvent, handleReaction, handleRedaction } from './handlers'
-import { sendRSVPAndUpdateState } from "./model";
-import { getDisplayname } from "./matrix-api";
+import { handleInviteEvent, handleReaction, handleRedaction } from './handlers'
 
 LogService.setLogger(new RichConsoleLogger());
 // LogService.setLevel(LogLevel.INFO);
@@ -54,8 +48,9 @@ async function main() {
   client.on("room.event", async (roomId: string, event: any) => {
     console.log("room.event:");
     console.log(JSON.stringify(event, null, 2));
-    if (isJoinEvent(event)) {
-      await handleJoinEvent(store, client, roomId,event);
+    if (isInviteEvent(event)) {
+      LogService.info("index", `Received room invite event`);
+      await handleInviteEvent(store, client, roomId,event);
     }
   });
 

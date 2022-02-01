@@ -5,7 +5,7 @@ import {
 } from "matrix-bot-sdk";
 import { sendRSVP, setRSVPMessageId, fetchRSVPMessageId } from './gatho-api';
 import { getDisplayname } from './matrix-api';
-import { MatrixReactionEvent, RSVPReaction } from './interfaces';
+import { MatrixReactionEvent, MatrixUsername, RSVPReaction } from './interfaces';
 import { emojiMap, Status } from './common-interfaces';
 import { calculateStatusToSend } from './update-rsvp-count';
 import { sendRSVPAndUpdateState } from './model'
@@ -20,7 +20,7 @@ import { matrixBotUsername } from './config';
 export const handleReaction = (store: OurStore, client: MatrixClient) => async (roomId: string, event: MatrixReactionEvent): Promise<undefined> => {
   const relatesTo = event.content['m.relates_to'];
   if (relatesTo === undefined) {
-    LogService.error("index", `m.relates_to event field doesn't exist in reaction event, ignoring.`);
+    LogService.error("handlers", `m.relates_to event field doesn't exist in reaction event, ignoring.`);
     return;
   }
   const { event_id: relatesToEventId, key: emoji } = relatesTo;
@@ -34,7 +34,7 @@ export const handleReaction = (store: OurStore, client: MatrixClient) => async (
     LogService.debug("index", `We don't yet have the RSVP message ID for room ${roomId}, fetching...`);
     const eventInfo = await fetchRSVPMessageId(roomId);
     if (eventInfo === null) {
-      LogService.error("index", `Bad response from server.`);
+      LogService.error("handlers", `Bad response from server.`);
       return;
     }
     if (eventInfo.event_exists_for_room && eventInfo.matrix_room_address !== null) {
@@ -71,7 +71,7 @@ export const handleRedaction = (store: OurStore, client: MatrixClient) =>
   async (roomId: string, event: any): Promise<undefined> => {
     const eventIdThatIsBeingRedacted: string = event.redacts;
     if (eventIdThatIsBeingRedacted === undefined) {
-      LogService.error("index", `Didn't find eventId being redacted`);
+      LogService.error("handlers", `Didn't find eventId being redacted`);
       return
     }
 
@@ -101,8 +101,10 @@ export const handleRedaction = (store: OurStore, client: MatrixClient) =>
   }
 
 
-export async function handleJoinEvent(store: OurStore, client: MatrixClient, roomId: string, event: any): Promise<void> {
-  if (event.sender === matrixBotUsername) {
+export async function handleInviteEvent(store: OurStore, client: MatrixClient, roomId: string, event: any): Promise<void> {
+  const invitedUser: MatrixUsername = event.state_key;
+  if (invitedUser === matrixBotUsername) {
+    LogService.info("handlers", `Join event was the bot ${matrixBotUsername}, ignoring`);
     return;
   }
 
@@ -113,12 +115,13 @@ export async function handleJoinEvent(store: OurStore, client: MatrixClient, roo
   if (store.getState().rsvpMessages[roomId] === undefined) {
     const eventInfo = await fetchRSVPMessageId(roomId);
     if (eventInfo === null) {
-      LogService.error("index", `Bad response from server calling fetchRSVPMessageId in room.event handler`);
+      LogService.error("handlers", `Bad response from server calling fetchRSVPMessageId in room.event handler`);
       return;
     }
 
     if (eventInfo.event_exists_for_room === false || eventInfo.matrix_room_address == null) {
       // Room isn't linked if no event exists for room or matrix room address is null
+      LogService.info("handlers", `Room isn't linked, ignoring join event`);
       return;
     }
   }

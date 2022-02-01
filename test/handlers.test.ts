@@ -1,10 +1,10 @@
-import { handleJoinEvent, handleReaction } from '../src/handlers'
+import { handleInviteEvent, handleReaction } from '../src/handlers'
 import { setRSVPMessageId, sendRSVP, fetchRSVPMessageId } from '../src/gatho-api'
 import { mocked } from 'ts-jest/utils'
 import { rootReducer } from '../src/store';
 import { createStore } from 'redux'
 import { MatrixClient } from 'matrix-bot-sdk';
-import { MatrixJoinEvent, MatrixReactionEvent } from '../src/interfaces';
+import { MatrixInviteEvent, MatrixJoinEvent, MatrixReactionEvent } from '../src/interfaces';
 import { getDisplayname } from '../src/matrix-api'
 
 import * as dotenv from 'dotenv';
@@ -41,31 +41,24 @@ describe("secret matrix bot key", () => {
     expect(secret_matrix_bot_key).toBeDefined();
   })
 });
-describe("#handleJoinEvent()", () => {
+describe("#handleInviteEvent()", () => {
   test("when join event is the matrix bot joining the room, ignore", async () => {
-    const joinEvent: MatrixJoinEvent = {
-      "type": "m.room.member",
-      "sender": matrixBotUsername,
+    const joinEvent: MatrixInviteEvent = {
       "content": {
-        "membership": "join",
-        "displayname": "dev-bot",
-        "avatar_url": null
+        "avatar_url": "mxc://domain/1351351",
+        "displayname": "Jake C",
+        "membership": "invite"
       },
+      "origin_server_ts": 1643711476699,
+      "sender": "@inviter:domain",
       "state_key": matrixBotUsername,
-      "origin_server_ts": 1643680492130,
+      "type": "m.room.member",
       "unsigned": {
-        "replaces_state": "$125135",
-        "prev_content": {
-          "displayname": "dev-bot",
-          "membership": "invite"
-        },
-        "prev_sender": "@jake:blah.chat",
-        "age": 471
       },
-      "event_id": "$ja135013501351"
+      "event_id": "$..."
     }
     const store = createStore(rootReducer)
-    await handleJoinEvent(store,
+    await handleInviteEvent(store,
       undefined as unknown as MatrixClient,
       'room-id',
       joinEvent
@@ -85,21 +78,23 @@ Object {
       matrix_room_address: null,
       event_exists_for_room: false
     });
-    const joinEvent: MatrixJoinEvent = {
-      "type": "m.room.member",
-      "sender": '@someone:somewhere',
+    const joinEvent: MatrixInviteEvent = {
       "content": {
-        "membership": "join",
-        "displayname": "dev-bot",
-        "avatar_url": null
+        "avatar_url": "mxc://domain/1351351",
+        "displayname": "Jake C",
+        "membership": "invite"
       },
-      "origin_server_ts": 1643680492130,
+      "origin_server_ts": 1643711476699,
+      "sender": "@inviter:domain",
+      "state_key": "@invitee:domain",
+      "type": "m.room.member",
       "unsigned": {
       },
-      "event_id": "$ja135013501351"
+      "event_id": "$..."
+
     }
     const store = createStore(rootReducer)
-    await handleJoinEvent(store,
+    await handleInviteEvent(store,
       undefined as unknown as MatrixClient,
       'room-id',
       joinEvent
@@ -120,21 +115,22 @@ Object {
       matrix_room_address: 'room-id',
       event_exists_for_room: true
     });
-    const joinEvent: MatrixJoinEvent = {
-      "type": "m.room.member",
-      "sender": '@someone:somewhere',
+    const joinEvent: MatrixInviteEvent = {
       "content": {
-        "membership": "join",
-        "displayname": "dev-bot",
-        "avatar_url": null
+        "avatar_url": "mxc://domain/1351351",
+        "displayname": "Jake C",
+        "membership": "invite"
       },
-      "origin_server_ts": 1643680492130,
+      "origin_server_ts": 1643711476699,
+      "sender": "@inviter:domain",
+      "state_key": "@invitee:domain",
+      "type": "m.room.member",
       "unsigned": {
       },
-      "event_id": "$ja135013501351"
+      "event_id": "$..."
     }
     const store = createStore(rootReducer)
-    await handleJoinEvent(store,
+    await handleInviteEvent(store,
       undefined as unknown as MatrixClient,
       'room-id',
       joinEvent
@@ -146,8 +142,8 @@ Object {
   "room-id": Array [
     Object {
       "displayname": undefined,
-      "matrixEventId": "$ja135013501351",
-      "sender": "@someone:somewhere",
+      "matrixEventId": "$...",
+      "sender": "@inviter:domain",
       "status": "invited",
     },
   ],

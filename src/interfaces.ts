@@ -48,3 +48,20 @@ export type MatrixJoinEvent = CommonMatrixEventFields & {
   state_key?:string
   unsigned?: Object;
 }
+
+export type MatrixUsername = string;
+
+export type MatrixInviteEvent = CommonMatrixEventFields & {
+    content: {
+      avatar_url: string | null,
+      displayname: string,
+      membership: "invite"
+    },
+    origin_server_ts: number,
+    sender: MatrixUsername,
+    state_key: MatrixUsername,
+    type: "m.room.member",
+    unsigned: {
+    },
+    event_id: string
+}

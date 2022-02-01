@@ -1,5 +1,5 @@
-import { MatrixEvent, MatrixJoinEvent, MessageEvent } from "../src/interfaces";
-import { generateLinkEventUrl, isJoinEvent, parseMatrixUsernamePretty } from "../src/utils";
+import { MatrixEvent, MatrixInviteEvent, MatrixJoinEvent, MessageEvent } from "../src/interfaces";
+import { generateLinkEventUrl, isInviteEvent, isJoinEvent, parseMatrixUsernamePretty } from "../src/utils";
 
 describe("generateLinkEventUrl#()", () => {
   test("when no other rsvps are present, status is invited", async () => {
@@ -8,6 +8,20 @@ describe("generateLinkEventUrl#()", () => {
   });
 });
 
+const inviteEvent: MatrixInviteEvent = {
+    "content": {
+      "avatar_url": "mxc://domain/1351351",
+      "displayname": "Jake C",
+      "membership": "invite"
+    },
+    "origin_server_ts": 1643711476699,
+    "sender": "@inviter:domain",
+    "state_key": "@invitee:domain",
+    "type": "m.room.member",
+    "unsigned": {
+    },
+    "event_id": "$..."
+}
 const joinEvent: MatrixJoinEvent = {
   "type": "m.room.member",
   "sender": "@bot:matrix.gatho.party",
@@ -19,13 +33,6 @@ const joinEvent: MatrixJoinEvent = {
   "state_key": "@bot:matrix.gatho.party",
   "origin_server_ts": 1643680492130,
   "unsigned": {
-    "replaces_state": "$125135",
-    "prev_content": {
-      "displayname": "dev-bot",
-      "membership": "invite"
-    },
-    "prev_sender": "@jake:blah.chat",
-    "age": 471
   },
   "event_id": "$ja135013501351"
 }
@@ -50,6 +57,18 @@ describe("#isJoinEvent()", () => {
   });
   test("doesn't mistake message event for join event", async () => {
     expect(isJoinEvent(messageEvent)).toBe(false);
+  });
+});
+
+describe("#isInviteEvent()", () => {
+  test("correctly identifies invite event", async () => {
+    expect(isInviteEvent(inviteEvent)).toBe(true);
+  });
+  test("doesn't mistake message event for invite event", async () => {
+    expect(isInviteEvent(messageEvent)).toBe(false);
+  });
+  test("doesn't mistake join event for invite event", async () => {
+    expect(isInviteEvent(joinEvent)).toBe(false);
   });
 });
 

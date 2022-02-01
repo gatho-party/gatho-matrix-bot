@@ -2,6 +2,9 @@ import { emojiMap, Status } from './common-interfaces';
 import { sendRSVP } from './gatho-api';
 import { RSVPReaction } from './interfaces';
 import { OurStore, store } from './store';
+import {
+  LogService
+} from "matrix-bot-sdk";
 
 export async function sendRSVPAndUpdateState({ store,
   event, displayname, status, roomId }: {
@@ -19,5 +22,6 @@ export async function sendRSVPAndUpdateState({ store,
     displayname
   }
   store.dispatch({ type: 'add-rsvp', roomId, reaction: newReaction });
+  LogService.info("model", `Sending RSVP ${status} for ${matrix_username} to ${roomId}`);
   sendRSVP({ roomId, matrix_username, status, displayname });
 }
