@@ -5,7 +5,7 @@ import {
 } from "matrix-bot-sdk";
 import { sendRSVP, setRSVPMessageId, fetchRSVPMessageId } from './gatho-api';
 import { getDisplayname } from './matrix-api';
-import { MatrixReactionEvent, MatrixUsername, RSVPReaction } from './interfaces';
+import { MatrixInviteEvent, MatrixReactionEvent, MatrixUsername, RSVPReaction } from './interfaces';
 import { emojiMap, Status } from './common-interfaces';
 import { calculateStatusToSend } from './update-rsvp-count';
 import { sendRSVPAndUpdateState } from './model'
@@ -54,11 +54,11 @@ export const handleReaction = (store: OurStore, client: MatrixClient) => async (
   }
 
 
-  const { sender: matrix_username } = event
-  const displayname = await getDisplayname(client, matrix_username);
+  const { sender: matrixUserSubmittingRSVP, event_id } = event
+  const displayname = await getDisplayname(client, matrixUserSubmittingRSVP);
   const status: Status = emojiMap[emoji];
 
-  await sendRSVPAndUpdateState({ store, event, displayname, status, roomId });
+  await sendRSVPAndUpdateState({ store, matrixUserSubmittingRSVP, matrixEventId: event_id, displayname, status, roomId });
 }
 
 /**
@@ -101,7 +101,7 @@ export const handleRedaction = (store: OurStore, client: MatrixClient) =>
   }
 
 
-export async function handleInviteEvent(store: OurStore, client: MatrixClient, roomId: string, event: any): Promise<void> {
+export async function handleInviteEvent(store: OurStore, client: MatrixClient, roomId: string, event: MatrixInviteEvent): Promise<void> {
   const invitedUser: MatrixUsername = event.state_key;
   if (invitedUser === matrixBotUsername) {
     LogService.info("handlers", `Join event was the bot ${matrixBotUsername}, ignoring`);
@@ -128,6 +128,11 @@ export async function handleInviteEvent(store: OurStore, client: MatrixClient, r
   }
   // If there are RSVP messages for the room it's definitely been linked
   const status: Status = 'invited'
-  const displayname = await getDisplayname(client, event.sender);
-  await sendRSVPAndUpdateState({ store, event, displayname, status, roomId });
+  const displayname = await getDisplayname(client, invitedUser);
+  await sendRSVPAndUpdateState({
+    store, matrixUserSubmittingRSVP: invitedUser,
+    matrixEventId: event.event_id
+    , displayname, status, roomId
+  });
+
 }

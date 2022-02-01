@@ -31,18 +31,18 @@ Object {
     const rsvpCount: RSVPCount = {
       'our-room-id': [
         {
-        status: 'notgoing',
-        sender: 'sender',
-        matrixEventId: 'event_id1',
-        displayname: 'sender pretty name'
-      },
+          status: 'notgoing',
+          sender: 'sender',
+          matrixEventId: 'event_id1',
+          displayname: 'sender pretty name'
+        },
         {
-        status: 'notgoing',
-        sender: 'other_sender',
-        matrixEventId: 'event_id2',
-        displayname: 'some other sender pretty name'
-      }
-    ]
+          status: 'notgoing',
+          sender: 'other_sender',
+          matrixEventId: 'event_id2',
+          displayname: 'some other sender pretty name'
+        }
+      ]
 
     };
     const newRsvpCount = addRSVP(rsvpCount, 'our-room-id', {

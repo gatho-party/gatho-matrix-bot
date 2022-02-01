@@ -143,7 +143,7 @@ Object {
     Object {
       "displayname": undefined,
       "matrixEventId": "$...",
-      "sender": "@inviter:domain",
+      "sender": "@invitee:domain",
       "status": "invited",
     },
   ],
