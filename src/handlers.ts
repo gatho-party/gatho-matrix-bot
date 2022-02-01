@@ -5,9 +5,11 @@ import {
 } from "matrix-bot-sdk";
 import { sendRSVP, setRSVPMessageId, fetchRSVPMessageId } from './gatho-api';
 import { getDisplayname } from './matrix-api';
-import { MatrixReactionEvent, RSVPReaction } from './interfaces';
+import { MatrixInviteEvent, MatrixReactionEvent, MatrixUsername, RSVPReaction } from './interfaces';
 import { emojiMap, Status } from './common-interfaces';
 import { calculateStatusToSend } from './update-rsvp-count';
+import { sendRSVPAndUpdateState } from './model'
+import { matrixBotUsername } from './config';
 
 /**
  * Handle Matrix reaction events. If this doesn't fire, it might be because you haven't
@@ -18,7 +20,7 @@ import { calculateStatusToSend } from './update-rsvp-count';
 export const handleReaction = (store: OurStore, client: MatrixClient) => async (roomId: string, event: MatrixReactionEvent): Promise<undefined> => {
   const relatesTo = event.content['m.relates_to'];
   if (relatesTo === undefined) {
-    LogService.error("index", `m.relates_to event field doesn't exist in reaction event, ignoring.`);
+    LogService.error("handlers", `m.relates_to event field doesn't exist in reaction event, ignoring.`);
     return;
   }
   const { event_id: relatesToEventId, key: emoji } = relatesTo;
@@ -32,7 +34,7 @@ export const handleReaction = (store: OurStore, client: MatrixClient) => async (
     LogService.debug("index", `We don't yet have the RSVP message ID for room ${roomId}, fetching...`);
     const eventInfo = await fetchRSVPMessageId(roomId);
     if (eventInfo === null) {
-      LogService.error("index", `Bad response from server.`);
+      LogService.error("handlers", `Bad response from server.`);
       return;
     }
     if (eventInfo.event_exists_for_room && eventInfo.matrix_room_address !== null) {
@@ -47,24 +49,16 @@ export const handleReaction = (store: OurStore, client: MatrixClient) => async (
 
   if (store.getState().rsvpMessages[roomId] !== relatesToEventId) {
     // Reaction is not on our RSVP message id, ignoring.
+    console.log("Reaction not in RSVP message ID, ignoring");
     return;
   }
 
-  /** The username of the person who reacted */
-  const { sender: matrix_username, event_id: matrixEventId } = event
 
-  const displayname = await getDisplayname(client, matrix_username);
-  const newReaction: RSVPReaction = {
-    reaction: emoji,
-    matrixEventId: matrixEventId,
-    sender: matrix_username,
-    displayname
-  }
-  store.dispatch({ type: 'add-rsvp', roomId, reaction: newReaction });
+  const { sender: matrixUserSubmittingRSVP, event_id } = event
+  const displayname = await getDisplayname(client, matrixUserSubmittingRSVP);
+  const status: Status = emojiMap[emoji];
 
-  const status: Status = emojiMap[newReaction.reaction];
-
-  sendRSVP({ roomId, matrix_username, status, displayname });
+  await sendRSVPAndUpdateState({ store, matrixUserSubmittingRSVP, matrixEventId: event_id, displayname, status, roomId });
 }
 
 /**
@@ -77,7 +71,7 @@ export const handleRedaction = (store: OurStore, client: MatrixClient) =>
   async (roomId: string, event: any): Promise<undefined> => {
     const eventIdThatIsBeingRedacted: string = event.redacts;
     if (eventIdThatIsBeingRedacted === undefined) {
-      LogService.error("index", `Didn't find eventId being redacted`);
+      LogService.error("handlers", `Didn't find eventId being redacted`);
       return
     }
 
@@ -87,7 +81,7 @@ export const handleRedaction = (store: OurStore, client: MatrixClient) =>
       return;
     }
 
-    const newStatus: Status | null = calculateStatusToSend(rsvpsInOurRoom, eventIdThatIsBeingRedacted, emojiMap);
+    const newStatus: Status | null = calculateStatusToSend(rsvpsInOurRoom, eventIdThatIsBeingRedacted);
     if (newStatus !== null) {
       const redactedRSVP: RSVPReaction | undefined = rsvpsInOurRoom
         .find(rsvp => rsvp.matrixEventId === eventIdThatIsBeingRedacted);
@@ -105,3 +99,40 @@ export const handleRedaction = (store: OurStore, client: MatrixClient) =>
 
     store.dispatch({ type: 'remove-rsvp', roomId, redactionEvent: eventIdThatIsBeingRedacted });
   }
+
+
+export async function handleInviteEvent(store: OurStore, client: MatrixClient, roomId: string, event: MatrixInviteEvent): Promise<void> {
+  const invitedUser: MatrixUsername = event.state_key;
+  if (invitedUser === matrixBotUsername) {
+    LogService.info("handlers", `Join event was the bot ${matrixBotUsername}, ignoring`);
+    return;
+  }
+
+  // If we don't have an RSVP message, check if the room is in gatho.
+  // To improve: We could have data in the store of linked rooms (which may or may not have an
+  // RSVP message for them), but this would require syncing on load (or storing store between
+  // sessions).
+  if (store.getState().rsvpMessages[roomId] === undefined) {
+    const eventInfo = await fetchRSVPMessageId(roomId);
+    if (eventInfo === null) {
+      LogService.error("handlers", `Bad response from server calling fetchRSVPMessageId in room.event handler`);
+      return;
+    }
+
+    if (eventInfo.event_exists_for_room === false) {
+      // Room isn't linked if no event exists
+      // If matrix room ID not linked yet that's fine - that will come later
+      LogService.info("handlers", `Room isn't linked, ignoring join event`);
+      return;
+    }
+  }
+  // If there are RSVP messages for the room it's definitely been linked
+  const status: Status = 'invited'
+  const displayname = await getDisplayname(client, invitedUser);
+  await sendRSVPAndUpdateState({
+    store, matrixUserSubmittingRSVP: invitedUser,
+    matrixEventId: event.event_id
+    , displayname, status, roomId
+  });
+
+}

@@ -22,7 +22,6 @@ export function addRSVP(rsvpCount: RSVPCount, roomId: string, reaction: RSVPReac
 export function calculateStatusToSend(
   rsvpsInRoom: RSVPReaction[],
   redactionEventId: string,
-  emojiToStatusMap: { [key: string]: Status; }
 ): Status | null {
   const redactedRSVP: RSVPReaction | undefined = rsvpsInRoom
     .find(rsvp => rsvp.matrixEventId === redactionEventId);
@@ -33,10 +32,6 @@ export function calculateStatusToSend(
 
   const senderOfRedactedRSVP = redactedRSVP.sender;
 
-  if (emojiToStatusMap[redactedRSVP.reaction] === undefined) {
-    return null;
-  }
-
   /*
   If we're redacting something, and we don't have any other entries - then make us 'invited'.
   If we're redacting something, and we we already have *ONE* other *valid* entry - send the
@@ -46,11 +41,10 @@ export function calculateStatusToSend(
   const ourOtherReleventReactions = rsvpsInRoom
     .filter(rsvp => rsvp.sender === senderOfRedactedRSVP)
     .filter(rsvp => rsvp.matrixEventId !== redactionEventId)
-    .filter(rsvp => emojiToStatusMap.hasOwnProperty(rsvp.reaction))
 
   if (ourOtherReleventReactions.length === 1) {
     const newRsvp = ourOtherReleventReactions[0]
-    const status: Status = emojiToStatusMap[newRsvp.reaction];
+    const status: Status = newRsvp.status;
     return status;
   }
   if (ourOtherReleventReactions.length > 1) {

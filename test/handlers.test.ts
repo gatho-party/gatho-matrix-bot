@@ -1,27 +1,32 @@
-import { handleReaction } from '../src/handlers'
+import { handleInviteEvent, handleReaction } from '../src/handlers'
 import { setRSVPMessageId, sendRSVP, fetchRSVPMessageId } from '../src/gatho-api'
 import { mocked } from 'ts-jest/utils'
 import { rootReducer } from '../src/store';
 import { createStore } from 'redux'
 import { MatrixClient } from 'matrix-bot-sdk';
-import { MatrixReactionEvent } from '../src/interfaces';
+import { MatrixInviteEvent, MatrixJoinEvent, MatrixReactionEvent } from '../src/interfaces';
 import { getDisplayname } from '../src/matrix-api'
 
 import * as dotenv from 'dotenv';
+import { Status } from '../src/common-interfaces';
+import { matrixBotUsername } from '../src/config';
 // Support .env file
 dotenv.config();
 
 export const secret_matrix_bot_key = process.env.GATHO_API_SECRET_KEY as string;
-
+import { sendRSVPAndUpdateState } from '../src/model';
 jest.mock('../src/matrix-api', () => ({
   getDisplayname: jest.fn()
 }));
 jest.mock('../src/gatho-api', () => ({
+  sendRSVPAndUpdateState: jest.fn(),
   setRsvpMessageId: jest.fn(),
   sendRSVP: jest.fn(),
   fetchRSVPMessageId: jest.fn(),
   setRSVPMessageId: jest.fn()
 }));
+
+
 
 const mockedGetDisplayname = mocked(getDisplayname, true);
 const mockedSetRSVPMessageId = mocked(setRSVPMessageId, true);
@@ -36,6 +41,117 @@ describe("secret matrix bot key", () => {
     expect(secret_matrix_bot_key).toBeDefined();
   })
 });
+describe("#handleInviteEvent()", () => {
+  test("when join event is the matrix bot joining the room, ignore", async () => {
+    const joinEvent: MatrixInviteEvent = {
+      "content": {
+        "avatar_url": "mxc://domain/1351351",
+        "displayname": "Jake C",
+        "membership": "invite"
+      },
+      "origin_server_ts": 1643711476699,
+      "sender": "@inviter:domain",
+      "state_key": matrixBotUsername,
+      "type": "m.room.member",
+      "unsigned": {
+      },
+      "event_id": "$..."
+    }
+    const store = createStore(rootReducer)
+    await handleInviteEvent(store,
+      undefined as unknown as MatrixClient,
+      'room-id',
+      joinEvent
+    )
+    expect(mockedFetchRSVPMessageId).toBeCalledTimes(0);
+    expect(sendRSVP).toBeCalledTimes(0);
+    expect(store.getState()).toMatchInlineSnapshot(`
+Object {
+  "rsvpMessages": Object {},
+  "rsvpReactions": Object {},
+}
+`);
+  });
+  test("when join event is valid and room doesn't exist, ignore", async () => {
+    mockedFetchRSVPMessageId.mockResolvedValueOnce({
+      status: 'success',
+      matrix_room_address: null,
+      event_exists_for_room: false
+    });
+    const joinEvent: MatrixInviteEvent = {
+      "content": {
+        "avatar_url": "mxc://domain/1351351",
+        "displayname": "Jake C",
+        "membership": "invite"
+      },
+      "origin_server_ts": 1643711476699,
+      "sender": "@inviter:domain",
+      "state_key": "@invitee:domain",
+      "type": "m.room.member",
+      "unsigned": {
+      },
+      "event_id": "$..."
+
+    }
+    const store = createStore(rootReducer)
+    await handleInviteEvent(store,
+      undefined as unknown as MatrixClient,
+      'room-id',
+      joinEvent
+    )
+    expect(mockedFetchRSVPMessageId).toBeCalledTimes(1);
+    expect(sendRSVP).toBeCalledTimes(0);
+    expect(store.getState()).toMatchInlineSnapshot(`
+Object {
+  "rsvpMessages": Object {},
+  "rsvpReactions": Object {},
+}
+`);
+  });
+
+  test("when join event is valid and room exists, send invited RSVP", async () => {
+    mockedFetchRSVPMessageId.mockResolvedValueOnce({
+      status: 'success',
+      matrix_room_address: null,
+      event_exists_for_room: true
+    });
+    const joinEvent: MatrixInviteEvent = {
+      "content": {
+        "avatar_url": "mxc://domain/1351351",
+        "displayname": "Jake C",
+        "membership": "invite"
+      },
+      "origin_server_ts": 1643711476699,
+      "sender": "@inviter:domain",
+      "state_key": "@invitee:domain",
+      "type": "m.room.member",
+      "unsigned": {
+      },
+      "event_id": "$..."
+    }
+    const store = createStore(rootReducer)
+    await handleInviteEvent(store,
+      undefined as unknown as MatrixClient,
+      'room-id',
+      joinEvent
+    )
+    expect(mockedFetchRSVPMessageId).toBeCalledTimes(1);
+    expect(sendRSVP).toBeCalledTimes(1);
+    expect(store.getState().rsvpReactions).toMatchInlineSnapshot(`
+Object {
+  "room-id": Array [
+    Object {
+      "displayname": undefined,
+      "matrixEventId": "$...",
+      "sender": "@invitee:domain",
+      "status": "invited",
+    },
+  ],
+}
+`);
+  });
+
+});
 describe("#handleReaction()", () => {
   test("when event doesn't exist for valid reaction, ignore", async () => {
     mockedFetchRSVPMessageId.mockResolvedValueOnce({
@@ -44,6 +160,7 @@ describe("#handleReaction()", () => {
       event_exists_for_room: false
     });
     const event: MatrixReactionEvent = {
+      origin_server_ts: 1234,
       content: {
         'm.relates_to': {
           event_id: 'not-our-rsvp-message-id',
@@ -61,7 +178,7 @@ describe("#handleReaction()", () => {
     expect(mockedFetchRSVPMessageId).toBeCalledWith('matrix-room-id');
     expect(mockedFetchRSVPMessageId).toBeCalledTimes(1);
   });
-  test("when event exists, no RSVP message exists and valid reaction, set RSVP message id", async () => {
+  test("when event exists, no RSVP message exists and reaction is valid, set RSVP message id", async () => {
     mockedFetchRSVPMessageId.mockResolvedValueOnce({
       status: 'success',
       matrix_room_address: null,
@@ -69,6 +186,7 @@ describe("#handleReaction()", () => {
     });
     mockedGetDisplayname.mockResolvedValueOnce('sender displayname');
     const event: MatrixReactionEvent = {
+      origin_server_ts: 1234,
       content: {
         'm.relates_to': {
           event_id: 'new-rsvp-message-id',
@@ -86,8 +204,8 @@ Object {
     Object {
       "displayname": "sender displayname",
       "matrixEventId": "event_id",
-      "reaction": "👍️",
       "sender": "sender",
+      "status": "going",
     },
   ],
 }
@@ -98,6 +216,7 @@ Object {
     expect(mockedSetRSVPMessageId).toBeCalledTimes(1);
     expect(mockedSetRSVPMessageId).toBeCalledWith(
       { roomId: 'matrix-room-id', rsvpMessageEventId: 'new-rsvp-message-id' });
+
     expect(mockedSendRSVP).toBeCalledWith({
       roomId: 'matrix-room-id', matrix_username: 'sender',
       status: 'going', displayname: 'sender displayname'
@@ -107,6 +226,7 @@ Object {
 
   test("when room exists but reaction isn't valid, ignore", async () => {
     const event: MatrixReactionEvent = {
+      origin_server_ts: 1234,
       content: {
         'm.relates_to': {
           event_id: 'not-our-rsvp-message-id',
@@ -128,6 +248,7 @@ Object {
 
   test("when m.relates_to doesn't exist, ignore", async () => {
     const event: MatrixReactionEvent = {
+      origin_server_ts: 1234,
       content: {
       },
       sender: 'sender',
@@ -148,6 +269,7 @@ Object {
       event_exists_for_room: true
     });
     const event: MatrixReactionEvent = {
+      origin_server_ts: 1234,
       content: {
         'm.relates_to': {
           event_id: 'not-our-rsvp-message-id',
@@ -172,6 +294,7 @@ Object {
   test("when reaction is valid and RSVP message ID is in the store", async () => {
     mockedGetDisplayname.mockResolvedValueOnce('sender displayname');
     const event: MatrixReactionEvent = {
+      origin_server_ts: 1234,
       content: {
         'm.relates_to': {
           event_id: 'our-rsvp-message-id',
@@ -191,7 +314,7 @@ Object {
     expect(store.getState().rsvpReactions).toStrictEqual({
       'matrix-room-id': [
         {
-          reaction: '👍️',
+          status: 'going',
           matrixEventId: 'event_id',
           sender: 'sender',
           displayname: 'sender displayname'
@@ -206,6 +329,7 @@ Object {
   test("when reaction is valid & different and RSVP message ID is in the store, updates RSVP", async () => {
     mockedGetDisplayname.mockResolvedValueOnce('sender displayname');
     const event: MatrixReactionEvent = {
+      origin_server_ts: 1234,
       content: {
         'm.relates_to': {
           event_id: 'our-rsvp-message-id',
@@ -222,7 +346,7 @@ Object {
       rsvpReactions: {
         'matrix-room-id': [
           {
-            reaction: '👍️',
+            status: 'going' as Status,
             matrixEventId: 'event_id',
             sender: 'sender',
             displayname: 'sender displayname'
@@ -238,14 +362,14 @@ Object {
     Object {
       "displayname": "sender displayname",
       "matrixEventId": "event_id",
-      "reaction": "👍️",
       "sender": "sender",
+      "status": "going",
     },
     Object {
       "displayname": "sender displayname",
       "matrixEventId": "event_id",
-      "reaction": "👎️",
       "sender": "sender",
+      "status": "notgoing",
     },
   ],
 }
