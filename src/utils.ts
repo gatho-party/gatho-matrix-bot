@@ -11,3 +11,11 @@ export function isJoinEvent(event: MatrixJoinEvent | any): boolean {
   }
   return false;
 }
+
+export function parseMatrixUsernamePretty(matrix_username: string): string {
+  if (matrix_username.includes(":") === false || matrix_username.includes("@") === false) {
+    return matrix_username;
+  }
+  const withoutUrl = matrix_username.split(':')[0];
+  return withoutUrl.split('@')[1]
+}

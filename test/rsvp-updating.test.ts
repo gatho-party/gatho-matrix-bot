@@ -8,7 +8,7 @@ describe("#addRSVP()", () => {
   test("when no other rsvps are present, add new rsvp", async () => {
     const rsvpCount: RSVPCount = {};
     const newRsvpCount = addRSVP(rsvpCount, 'our-room-id', {
-      reaction: '👎️',
+      status: 'notgoing',
       sender: 'sender',
       matrixEventId: 'event_id',
       displayname: 'sender pretty name'
@@ -19,8 +19,8 @@ Object {
     Object {
       "displayname": "sender pretty name",
       "matrixEventId": "event_id",
-      "reaction": "👎️",
       "sender": "sender",
+      "status": "notgoing",
     },
   ],
 }
@@ -31,13 +31,13 @@ Object {
     const rsvpCount: RSVPCount = {
       'our-room-id': [
         {
-        reaction: '👎️',
+        status: 'notgoing',
         sender: 'sender',
         matrixEventId: 'event_id1',
         displayname: 'sender pretty name'
       },
         {
-        reaction: '👎️',
+        status: 'notgoing',
         sender: 'other_sender',
         matrixEventId: 'event_id2',
         displayname: 'some other sender pretty name'
@@ -46,7 +46,7 @@ Object {
 
     };
     const newRsvpCount = addRSVP(rsvpCount, 'our-room-id', {
-      reaction: '👍️',
+      status: 'going',
       sender: 'sender',
       matrixEventId: 'event_id',
       displayname: 'sender pretty name'
@@ -57,20 +57,20 @@ Object {
     Object {
       "displayname": "sender pretty name",
       "matrixEventId": "event_id1",
-      "reaction": "👎️",
       "sender": "sender",
+      "status": "notgoing",
     },
     Object {
       "displayname": "some other sender pretty name",
       "matrixEventId": "event_id2",
-      "reaction": "👎️",
       "sender": "other_sender",
+      "status": "notgoing",
     },
     Object {
       "displayname": "sender pretty name",
       "matrixEventId": "event_id",
-      "reaction": "👍️",
       "sender": "sender",
+      "status": "going",
     },
   ],
 }
@@ -88,93 +88,88 @@ describe("#calculateStatusToSend()", () => {
   test("when no other rsvps are present, status is invited", async () => {
     const rsvpsInRoom: RSVPReaction[] = [
       {
-        reaction: "up",
+        status: "going",
         sender: 'alice',
         matrixEventId: 'event1'
       }
     ];
 
-    const result: Status | null = calculateStatusToSend(rsvpsInRoom, 'event1', emojiMap);
+    const result: Status | null = calculateStatusToSend(rsvpsInRoom, 'event1');
     expect(result).toBe('invited');
   });
 
   test("when going rsvps also present, status is going", async () => {
     const rsvpsInRoom: RSVPReaction[] = [
       {
-        reaction: "up",
+        status: "going",
         sender: 'alice',
         matrixEventId: 'event1'
       },
       {
-        reaction: "down",
+        status: "notgoing",
         sender: 'alice',
         matrixEventId: 'event2'
       }
     ];
 
-    const result: Status | null = calculateStatusToSend(rsvpsInRoom, 'event2', emojiMap);
+    const result: Status | null = calculateStatusToSend(rsvpsInRoom, 'event2');
     expect(result).toBe('going');
   });
   test("when removing going, and notgoing rsvps also present, status is notgoing", async () => {
     const rsvpsInRoom: RSVPReaction[] = [
       {
-        reaction: "down",
+        status: "notgoing",
         sender: 'alice',
         matrixEventId: 'event1'
       },
       {
-        reaction: "up",
+        status: "going",
         sender: 'alice',
         matrixEventId: 'event2'
       }
     ];
 
-    const result: Status | null = calculateStatusToSend(rsvpsInRoom, 'event2', emojiMap);
+    const result: Status | null = calculateStatusToSend(rsvpsInRoom, 'event2');
     expect(result).toBe('notgoing');
   });
 
   test("when going and maybe rsvps also present, don't send any status", async () => {
     const rsvpsInRoom: RSVPReaction[] = [
       {
-        reaction: "thinking",
+        status: "maybe",
         sender: 'alice',
         matrixEventId: 'event1'
       },
       {
-        reaction: "up",
+        status: "going",
         sender: 'alice',
         matrixEventId: 'event2'
       },
       {
-        reaction: "down",
+        status: "notgoing",
         sender: 'alice',
         matrixEventId: 'event3'
       }
     ];
 
-    const result: Status | null = calculateStatusToSend(rsvpsInRoom, 'event2', emojiMap);
+    const result: Status | null = calculateStatusToSend(rsvpsInRoom, 'event2');
     expect(result).toBe(null);
   });
-  test("when one valid rsvp present, and one random reaction, send the valid rsvp", async () => {
+  test("when one valid rsvp present, send the valid rsvp", async () => {
     const rsvpsInRoom: RSVPReaction[] = [
       {
-        reaction: "WOOOOO",
-        sender: 'alice',
-        matrixEventId: 'event1'
-      },
-      {
-        reaction: "up",
+        status: "going",
         sender: 'alice',
         matrixEventId: 'event2'
       },
       {
-        reaction: "down",
+        status: "notgoing",
         sender: 'alice',
         matrixEventId: 'event3'
       }
     ];
 
-    const result: Status | null = calculateStatusToSend(rsvpsInRoom, 'event2', emojiMap);
+    const result: Status | null = calculateStatusToSend(rsvpsInRoom, 'event2');
     expect(result).toBe('notgoing');
   });
 });

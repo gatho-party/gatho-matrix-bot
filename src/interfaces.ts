@@ -1,6 +1,7 @@
+import { Status } from "./common-interfaces";
 
 export interface RSVPReaction {
-  reaction: string;
+  status: Status;
   sender: string;
   matrixEventId: string;
   displayname?: string;

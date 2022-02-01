@@ -8,6 +8,8 @@ import { getDisplayname } from './matrix-api';
 import { MatrixReactionEvent, RSVPReaction } from './interfaces';
 import { emojiMap, Status } from './common-interfaces';
 import { calculateStatusToSend } from './update-rsvp-count';
+import { sendRSVPAndUpdateState } from './model'
+import { matrixBotUsername } from './config';
 
 /**
  * Handle Matrix reaction events. If this doesn't fire, it might be because you haven't
@@ -47,24 +49,16 @@ export const handleReaction = (store: OurStore, client: MatrixClient) => async (
 
   if (store.getState().rsvpMessages[roomId] !== relatesToEventId) {
     // Reaction is not on our RSVP message id, ignoring.
+    console.log("Reaction not in RSVP message ID, ignoring");
     return;
   }
 
-  /** The username of the person who reacted */
-  const { sender: matrix_username, event_id: matrixEventId } = event
 
+  const { sender: matrix_username } = event
   const displayname = await getDisplayname(client, matrix_username);
-  const newReaction: RSVPReaction = {
-    reaction: emoji,
-    matrixEventId: matrixEventId,
-    sender: matrix_username,
-    displayname
-  }
-  store.dispatch({ type: 'add-rsvp', roomId, reaction: newReaction });
+  const status: Status = emojiMap[emoji];
 
-  const status: Status = emojiMap[newReaction.reaction];
-
-  sendRSVP({ roomId, matrix_username, status, displayname });
+  await sendRSVPAndUpdateState({ store, event, displayname, status, roomId });
 }
 
 /**
@@ -87,7 +81,7 @@ export const handleRedaction = (store: OurStore, client: MatrixClient) =>
       return;
     }
 
-    const newStatus: Status | null = calculateStatusToSend(rsvpsInOurRoom, eventIdThatIsBeingRedacted, emojiMap);
+    const newStatus: Status | null = calculateStatusToSend(rsvpsInOurRoom, eventIdThatIsBeingRedacted);
     if (newStatus !== null) {
       const redactedRSVP: RSVPReaction | undefined = rsvpsInOurRoom
         .find(rsvp => rsvp.matrixEventId === eventIdThatIsBeingRedacted);
@@ -105,3 +99,31 @@ export const handleRedaction = (store: OurStore, client: MatrixClient) =>
 
     store.dispatch({ type: 'remove-rsvp', roomId, redactionEvent: eventIdThatIsBeingRedacted });
   }
+
+
+export async function handleJoinEvent(store: OurStore, client: MatrixClient, roomId: string, event: any): Promise<void> {
+  if (event.sender === matrixBotUsername) {
+    return;
+  }
+
+  // If we don't have an RSVP message, check if the room is in gatho.
+  // To improve: We could have data in the store of linked rooms (which may or may not have an
+  // RSVP message for them), but this would require syncing on load (or storing store between
+  // sessions).
+  if (store.getState().rsvpMessages[roomId] === undefined) {
+    const eventInfo = await fetchRSVPMessageId(roomId);
+    if (eventInfo === null) {
+      LogService.error("index", `Bad response from server calling fetchRSVPMessageId in room.event handler`);
+      return;
+    }
+
+    if (eventInfo.event_exists_for_room === false || eventInfo.matrix_room_address == null) {
+      // Room isn't linked if no event exists for room or matrix room address is null
+      return;
+    }
+  }
+  // If there are RSVP messages for the room it's definitely been linked
+  const status: Status = 'invited'
+  const displayname = await getDisplayname(client, event.sender);
+  await sendRSVPAndUpdateState({ store, event, displayname, status, roomId });
+}

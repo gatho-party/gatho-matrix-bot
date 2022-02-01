@@ -3,14 +3,16 @@ import {
   LogService, LogLevel,
   RichConsoleLogger,
 } from "matrix-bot-sdk";
-import { homeserverUrl, password, username, gathoApiUrl } from './config'
+import { homeserverUrl, matrixBotPassword, matrixBotUsername, gathoApiUrl } from './config'
 import { RSVPReaction } from './interfaces';
 import { calculateStatusToSend, removeRSVP, addRSVP } from './update-rsvp-count'
 import { emojiMap, Status } from "./common-interfaces";
 import { sendRSVP, fetchRSVPMessageId } from "./gatho-api";
-import { generateLinkEventUrl } from './utils';
+import { generateLinkEventUrl, isJoinEvent, parseMatrixUsernamePretty } from './utils';
 import { store } from './store';
-import {handleReaction, handleRedaction} from './handlers'
+import { handleJoinEvent, handleReaction, handleRedaction } from './handlers'
+import { sendRSVPAndUpdateState } from "./model";
+import { getDisplayname } from "./matrix-api";
 
 LogService.setLogger(new RichConsoleLogger());
 // LogService.setLevel(LogLevel.INFO);
@@ -25,7 +27,8 @@ const storage = new SimpleFsStorageProvider("./data/bot.json");
 let client: MatrixClient;
 
 async function main() {
-  const authedClient = await (new MatrixAuth(homeserverUrl)).passwordLogin(username, password);
+  const botUsernameWithoutDomain = parseMatrixUsernamePretty(matrixBotUsername);
+  const authedClient = await (new MatrixAuth(homeserverUrl)).passwordLogin(botUsernameWithoutDomain, matrixBotPassword);
   client = new MatrixClient(authedClient.homeserverUrl, authedClient.accessToken, storage);
 
   // Automatically join rooms the bot is invited to
@@ -46,6 +49,14 @@ async function main() {
       "msgtype": "m.notice",
       "body": `Hello, this is the Gatho.party bot! Link this chat to a Gatho event via ${generateLinkEventUrl(roomId, gathoApiUrl)}. For questions or feedback join #gatho-events:matrix.org.`,
     });
+  });
+
+  client.on("room.event", async (roomId: string, event: any) => {
+    console.log("room.event:");
+    console.log(JSON.stringify(event, null, 2));
+    if (isJoinEvent(event)) {
+      await handleJoinEvent(store, client, roomId,event);
+    }
   });
 
   LogService.info("index", "Starting bot...");

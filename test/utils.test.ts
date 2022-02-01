@@ -1,5 +1,5 @@
 import { MatrixEvent, MatrixJoinEvent, MessageEvent } from "../src/interfaces";
-import { generateLinkEventUrl, isJoinEvent } from "../src/utils";
+import { generateLinkEventUrl, isJoinEvent, parseMatrixUsernamePretty } from "../src/utils";
 
 describe("generateLinkEventUrl#()", () => {
   test("when no other rsvps are present, status is invited", async () => {
@@ -50,5 +50,22 @@ describe("#isJoinEvent()", () => {
   });
   test("doesn't mistake message event for join event", async () => {
     expect(isJoinEvent(messageEvent)).toBe(false);
+  });
+});
+
+
+
+describe("#parseMatrixUsernamePretty()", () => {
+  test("parses name correctly", async () => {
+    const name = parseMatrixUsernamePretty("@Jake:somedomain.com");
+    expect(name).toBe('Jake');
+  });
+  test("return original when without @", async () => {
+    const name = parseMatrixUsernamePretty("Jake:somedomain.com");
+    expect(name).toBe('Jake:somedomain.com');
+  });
+  test("return original when without :", async () => {
+    const name = parseMatrixUsernamePretty("@Jakesomedomain.com");
+    expect(name).toBe('@Jakesomedomain.com');
   });
 });
