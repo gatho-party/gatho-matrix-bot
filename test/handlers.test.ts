@@ -44,6 +44,7 @@ describe("#handleReaction()", () => {
       event_exists_for_room: false
     });
     const event: MatrixReactionEvent = {
+      origin_server_ts: 1234,
       content: {
         'm.relates_to': {
           event_id: 'not-our-rsvp-message-id',
@@ -69,6 +70,7 @@ describe("#handleReaction()", () => {
     });
     mockedGetDisplayname.mockResolvedValueOnce('sender displayname');
     const event: MatrixReactionEvent = {
+      origin_server_ts: 1234,
       content: {
         'm.relates_to': {
           event_id: 'new-rsvp-message-id',
@@ -107,6 +109,7 @@ Object {
 
   test("when room exists but reaction isn't valid, ignore", async () => {
     const event: MatrixReactionEvent = {
+      origin_server_ts: 1234,
       content: {
         'm.relates_to': {
           event_id: 'not-our-rsvp-message-id',
@@ -128,6 +131,7 @@ Object {
 
   test("when m.relates_to doesn't exist, ignore", async () => {
     const event: MatrixReactionEvent = {
+      origin_server_ts: 1234,
       content: {
       },
       sender: 'sender',
@@ -148,6 +152,7 @@ Object {
       event_exists_for_room: true
     });
     const event: MatrixReactionEvent = {
+      origin_server_ts: 1234,
       content: {
         'm.relates_to': {
           event_id: 'not-our-rsvp-message-id',
@@ -172,6 +177,7 @@ Object {
   test("when reaction is valid and RSVP message ID is in the store", async () => {
     mockedGetDisplayname.mockResolvedValueOnce('sender displayname');
     const event: MatrixReactionEvent = {
+      origin_server_ts: 1234,
       content: {
         'm.relates_to': {
           event_id: 'our-rsvp-message-id',
@@ -206,6 +212,7 @@ Object {
   test("when reaction is valid & different and RSVP message ID is in the store, updates RSVP", async () => {
     mockedGetDisplayname.mockResolvedValueOnce('sender displayname');
     const event: MatrixReactionEvent = {
+      origin_server_ts: 1234,
       content: {
         'm.relates_to': {
           event_id: 'our-rsvp-message-id',
