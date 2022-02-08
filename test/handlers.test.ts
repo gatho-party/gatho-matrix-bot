@@ -75,7 +75,7 @@ Object {
   test("when join event is valid and room doesn't exist, ignore", async () => {
     mockedFetchRSVPMessageId.mockResolvedValueOnce({
       status: 'success',
-      matrix_room_address: null,
+      rsvp_message_id: null,
       event_exists_for_room: false
     });
     const joinEvent: MatrixInviteEvent = {
@@ -112,7 +112,7 @@ Object {
   test("when join event is valid and room exists, send invited RSVP", async () => {
     mockedFetchRSVPMessageId.mockResolvedValueOnce({
       status: 'success',
-      matrix_room_address: null,
+      rsvp_message_id: null,
       event_exists_for_room: true
     });
     const joinEvent: MatrixInviteEvent = {

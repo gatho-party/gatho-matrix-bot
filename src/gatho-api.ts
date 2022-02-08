@@ -69,7 +69,7 @@ export async function fetchRSVPMessageId(roomId: string): Promise<FetchRSVPMessa
     const result = await sendPostRequest('/api/rsvp-message-id-for-room-via-matrix', payload);
     json = await result.json();
   } catch (e) {
-    LogService.error("gatho-api", `Failed to fetch message id & if event exists for room ${roomId}`);
+    LogService.error("gatho-api", `Failed to fetch message id & if event exists for room ${roomId}. Error: ${e}`);
     return null
   }
 
