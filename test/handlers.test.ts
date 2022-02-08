@@ -40,7 +40,7 @@ describe("#handleReaction()", () => {
   test("when event doesn't exist for valid reaction, ignore", async () => {
     mockedFetchRSVPMessageId.mockResolvedValueOnce({
       status: 'success',
-      matrix_room_address: null,
+      rsvp_message_id: null,
       event_exists_for_room: false
     });
     const event: MatrixReactionEvent = {
@@ -64,7 +64,7 @@ describe("#handleReaction()", () => {
   test("when event exists, no RSVP message exists and valid reaction, set RSVP message id", async () => {
     mockedFetchRSVPMessageId.mockResolvedValueOnce({
       status: 'success',
-      matrix_room_address: null,
+      rsvp_message_id: null,
       event_exists_for_room: true
     });
     mockedGetDisplayname.mockResolvedValueOnce('sender displayname');
@@ -144,7 +144,7 @@ Object {
   test("when reaction is for a different message to our RSVP message, ignore", async () => {
     mockedFetchRSVPMessageId.mockResolvedValueOnce({
       status: 'success',
-      matrix_room_address: 'our-rsvp-message-id',
+      rsvp_message_id: 'our-rsvp-message-id',
       event_exists_for_room: true
     });
     const event: MatrixReactionEvent = {

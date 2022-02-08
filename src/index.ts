@@ -13,8 +13,12 @@ import { store } from './store';
 import {handleReaction, handleRedaction} from './handlers'
 
 LogService.setLogger(new RichConsoleLogger());
-// LogService.setLevel(LogLevel.INFO);
-LogService.setLevel(LogLevel.TRACE);
+
+LogService.setLevel(LogLevel.DEBUG);
+
+// Shows the Matrix sync loop details - not needed most of the time
+// LogService.setLevel(LogLevel.TRACE);
+
 // LogService.muteModule("Metrics");
 LogService.trace = LogService.debug;
 

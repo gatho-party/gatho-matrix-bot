@@ -31,7 +31,7 @@ export interface FetchRSVPMessageIdReq extends ViaMatrixPayload {
 }
 export interface FetchRSVPMessageIdRes {
   status: `success`,
-  matrix_room_address: string | null,
+  rsvp_message_id: string | null,
   event_exists_for_room: boolean 
 }
 

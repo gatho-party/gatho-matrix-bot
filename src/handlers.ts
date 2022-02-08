@@ -35,9 +35,9 @@ export const handleReaction = (store: OurStore, client: MatrixClient) => async (
       LogService.error("index", `Bad response from server.`);
       return;
     }
-    if (eventInfo.event_exists_for_room && eventInfo.matrix_room_address !== null) {
+    if (eventInfo.event_exists_for_room && eventInfo.rsvp_message_id !== null) {
       // We already have an RSVP message, let's save it to the store
-      store.dispatch({ type: 'set-rsvp-message-id', roomId, rsvpMessageId: eventInfo.matrix_room_address });
+      store.dispatch({ type: 'set-rsvp-message-id', roomId, rsvpMessageId: eventInfo.rsvp_message_id });
     } else if (eventInfo.event_exists_for_room) {
       // Set RSVP message to the message this reaction is on and save to store
       await setRSVPMessageId({ roomId, rsvpMessageEventId: relatesToEventId });
