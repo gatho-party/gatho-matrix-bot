@@ -11,7 +11,7 @@
   "scripts": {
     "build": "rm -f tsconfig.tsbuildinfo && npx tsc",
     "start": "node dist/index.js",
-    "test": "jest test/*",
+    "test": "DISABLE_MOCKED_WARNING=true jest test/*",
     "test:watch": "ls test/*.ts src/*.ts src/**/*.ts | entr -rcs 'DISABLE_MOCKED_WARNING=true yarn test'",
     "typecheck": "npx tsc"
   },
