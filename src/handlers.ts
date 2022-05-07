@@ -26,6 +26,7 @@ export const handleReaction = (store: OurStore, client: MatrixClient) => async (
   const { event_id: relatesToEventId, key: emoji } = relatesTo;
 
   if (emojiMap[emoji] === undefined) {
+    console.log(`Emoji ${emoji} isn't in emojiMap.`);
     return;
   }
 
