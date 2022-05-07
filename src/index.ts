@@ -20,8 +20,6 @@ LogService.trace = LogService.debug;
 
 const storage = new SimpleFsStorageProvider("./data/bot.json");
 
-
-
 let client: MatrixClient;
 
 async function main() {
@@ -31,9 +29,6 @@ async function main() {
 
   // Automatically join rooms the bot is invited to
   AutojoinRoomsMixin.setupOnClient(client);
-
-  client.on("reaction", handleReaction(store, client));
-  client.on("room.redaction", handleRedaction(store, client));
 
   client.on("room.failed_decryption", (roomId, event, error) => {
     // handle `m.room.encrypted` event that could not be decrypted
@@ -50,6 +45,18 @@ async function main() {
   });
 
   client.on("room.event", async (roomId: string, event: any) => {
+    if (event.type === 'm.reaction') {
+      console.log("handling reaction:");
+      console.log(JSON.stringify(event, null, 2));
+      handleReaction(store, client)(roomId, event)
+      return;
+    }
+    if (event.type === 'm.room.redaction') {
+      console.log("handling redaction:");
+      console.log(JSON.stringify(event, null, 2));
+      handleRedaction(store, client)(roomId, event);
+      return;
+    }
     console.log("room.event:");
     console.log(JSON.stringify(event, null, 2));
     if (isInviteEvent(event)) {

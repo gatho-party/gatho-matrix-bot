@@ -29,7 +29,14 @@ export type MessageEvent = CommonMatrixEventFields & {
   unsigned: Object;
 }
 
+export type MatrixRedactionEvent = CommonMatrixEventFields & {
+  type: 'm.room.redaction',
+  content: {};
+  redacts: string;
+}
+
 export type MatrixReactionEvent = CommonMatrixEventFields & {
+  type: "m.reaction",
   content: {
     'm.relates_to'?: {
       event_id: string

@@ -1,12 +1,8 @@
-export const rsvpGoing = "👍️"
-export const rsvpNotGoing = "👎️"
-export const rsvpMaybe = "🤔"
-
-export type rsvpEmoji = "👍️" | "👎️" | "🤔";
-
 export const emojiMap: { [key: string]: Status; } = {
   "👍️": 'going',
+  "👍": 'going',
   "👎️": 'notgoing',
+  "👎": 'notgoing',
   "🤔": 'maybe'
 }
 
